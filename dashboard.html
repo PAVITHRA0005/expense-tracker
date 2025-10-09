@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - Expense Tracker</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">ExpenseTracker</div>
+    <div class="nav">
+      <button id="nav-home">Home</button>
+      <button id="nav-about">About</button>
+      <button id="nav-savings">Savings</button>
+      <button id="nav-profile">Profile</button>
+      <button id="btn-logout">Logout</button>
+    </div>
+  </div>
+
+  <!-- Container: we will swap full-page views -->
+  <main class="app-container">
+
+    <!-- HOME view -->
+    <section id="view-home" class="view active">
+      <div class="container">
+        <div class="grid row-3">
+          <div>
+            <!-- Salary entry -->
+            <div class="card salary-panel">
+              <h4>Enter Your Salary</h4>
+              <div style="height:8px"></div>
+              <div class="salary-row">
+                <input id="input-salary" type="number" placeholder="Enter your salary" />
+                <select id="select-mode">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly" selected>Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+                <button id="save-salary" class="btn">Save</button>
+                <div style="width:10px"></div>
+                <input id="input-limit" type="number" placeholder="Set spend limit" style="width:160px" />
+                <button id="save-limit" class="btn" style="padding:8px 10px">Save Limit</button>
+                <div class="muted" style="margin-left:8px">Salary & limit persist until changed.</div>
+              </div>
+            </div>
+
+            <!-- summary -->
+            <div class="summary-grid">
+              <div class="card" style="flex:1">
+                <h4>Salary</h4>
+                <div class="big" id="display-salary">-</div>
+                <div class="small muted">Shows saved salary</div>
+              </div>
+              <div class="card" style="flex:1">
+                <h4>Remaining</h4>
+                <div class="big" id="display-remaining">-</div>
+                <div class="small muted">Salary - total expenses</div>
+              </div>
+              <div class="card" style="flex:1">
+                <h4>Limit</h4>
+                <div class="big" id="display-limit">-</div>
+                <div class="small muted">You'll be alerted when exceeded</div>
+              </div>
+            </div>
+
+            <!-- Expenses table -->
+            <div class="section card" style="margin-top:16px">
+              <div class="header">
+                <div><strong>Expenses / Savings</strong></div>
+                <div><button id="btn-add" class="btn">+ Add</button></div>
+              </div>
+              <div style="overflow:auto">
+                <table id="expenses-table">
+                  <thead>
+                    <tr><th>Category</th><th>Amount</th><th>Type</th><th>Date/Time</th><th>Action</th></tr>
+                  </thead>
+                  <tbody id="expenses-body">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- right column: categories -->
+          <div>
+            <div class="card">
+              <h4>Categories</h4>
+              <div style="margin-top:10px" id="categories-container">
+                <!-- category cards injected here -->
+              </div>
+
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <input id="custom-cat" type="text" placeholder="Customize your category" style="flex:1" />
+                <button id="add-cat" class="btn">Add</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT view -> shows full expense record information -->
+    <section id="view-about" class="view">
+      <div class="container">
+        <div class="card">
+          <h3>About - Expense Records</h3>
+          <p class="muted">This page displays the detailed expense records. You can edit or delete entries here.</p>
+          <div style="height:12px"></div>
+          <div class="table-container">
+            <table id="about-expenses-table">
+              <thead>
+                <tr><th>Category</th><th>Amount</th><th>Type</th><th>Date/Time</th><th>Action</th></tr>
+              </thead>
+              <tbody id="about-expenses-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAVINGS view -> aggregated by timeframe -->
+    <section id="view-savings" class="view">
+      <div class="container">
+        <div class="card">
+          <h3>Savings Summary</h3>
+          <p class="muted">Choose timeframe to view aggregated savings/expenses.</p>
+
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="time-btn" data-period="daily">Daily</button>
+            <button class="time-btn" data-period="weekly">Weekly</button>
+            <button class="time-btn" data-period="monthly">Monthly</button>
+            <button class="time-btn" data-period="yearly">Yearly</button>
+          </div>
+
+          <div style="margin-top:18px" id="savings-content">
+            <!-- generated summary here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE view -> user's profile -->
+    <section id="view-profile" class="view">
+      <div class="container">
+        <div class="card">
+          <h3>Profile</h3>
+          <div style="margin-top:8px">
+            <p class="small">Name: <strong id="profile-name">-</strong></p>
+            <p class="small">Email: <strong id="profile-email">-</strong></p>
+            <p class="small">Saved salary: <strong id="profile-salary">-</strong> (<span id="profile-mode">-</span>)</p>
+            <p class="small">Total saved: <strong id="profile-saved">-</strong></p>
+          </div>
+          <div style="margin-top:12px">
+            <button id="edit-profile" class="btn">Edit Profile (local)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal for Add/Edit -->
+  <div id="modal" class="modal-overlay" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <h3 id="modal-title">Add Expense</h3>
+      <div style="margin-top:8px">
+        <label class="small muted">Category</label>
+        <select id="modal-category" style="width:100%;margin-top:6px"></select>
+      </div>
+      <div style="margin-top:8px">
+        <label class="small muted">Amount</label>
+        <input id="modal-amount" type="number" style="width:100%;margin-top:6px" />
+      </div>
+      <div style="margin-top:8px">
+        <label class="small muted">Type</label>
+        <select id="modal-type" style="width:100%;margin-top:6px">
+          <option value="expense">Expense</option>
+          <option value="saving">Saving</option>
+        </select>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="modal-cancel" class="btn" style="background:#666">Cancel</button>
+        <button id="modal-save" class="btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
+

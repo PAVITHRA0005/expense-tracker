@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Expense Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <div class="auth-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit" class="btn-primary">Login</button>
+    </form>
+    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    // Pre-fill email & password if saved
+    if (localStorage.getItem("savedEmail")) {
+      emailInput.value = localStorage.getItem("savedEmail");
+    }
+    if (localStorage.getItem("savedPassword")) {
+      passwordInput.value = localStorage.getItem("savedPassword");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      try {
+        const response = await fetch("http://localhost:5000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Save JWT token for authenticated requests
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userId", data.userId);
+          localStorage.setItem("name", data.name);
+
+          // Save email & password to pre-fill next time
+          localStorage.setItem("savedEmail", email);
+          localStorage.setItem("savedPassword", password);
+
+          alert("Login successful!");
+          window.location.href = "dashboard.html"; // Redirect to your dashboard page
+        } else {
+          alert(data.message || "Login failed. Check your credentials.");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong. Try again later.");
+      }
+    });
+  </script>
+</body>
+</html>

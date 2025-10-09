@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ✅ Preload slideshow images for instant display -->
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1649972904349-9a3e6fcd508c" />
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1521540216272-a50305cd4421" />
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1565373678963-27a993b6f37b" />
+</head>
+<body>
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="overlay">
+      <h1>Smart Expense Tracker</h1>
+      <p>Track. Save. Grow. Your money, under control.</p>
+      <button onclick="location.href='signup.html'" class="btn-primary">Start Now</button>
+    </div>
+  </header>
+
+  <!-- Features Section -->
+  <section class="features">
+    <h2>Why Choose Us?</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/3208/3208676.png" alt="Simple" class="feature-icon">
+        <h3>Simple</h3>
+        <p>Quick and easy to log your daily expenses.</p>
+      </div>
+      <div class="feature-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/4149/4149670.png" alt="Insights" class="feature-icon">
+        <h3>Insights</h3>
+        <p>Visualize your spending with smart charts.</p>
+      </div>
+      <div class="feature-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="Secure" class="feature-icon">
+        <h3>Secure</h3>
+        <p>Advanced protection for your financial data.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a href="signup.html" class="btn-secondary">Explore Now</a>
+      <a href="#about" class="btn-secondary">About</a>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="about">
+    <h2>About Us</h2>
+    <p>
+      Our expense tracker is built to help you manage your finances with confidence.
+      With clear insights and an easy-to-use design, it makes money management simple and secure.
+    </p>
+    <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="About" class="about-img">
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
