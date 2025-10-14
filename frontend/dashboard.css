@@ -38,9 +38,26 @@ tbody tr{border-top:1px solid rgba(255,255,255,.03)}
 tbody tr:hover{background:rgba(255,255,255,.02)}
 
 /* categories */
-.category-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.category-card span{flex:1} /* ensures text takes remaining space and aligns all cards equally */
-#categories-container{display:flex;flex-direction:column;gap:8px}
+.cat-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.cat-row{display:flex;justify-content:space-between;align-items:center;width:100%}
+.cat-row button{background:transparent;border:1px solid rgba(255,255,255,.04);color:#ddd;padding:6px 10px;border-radius:8px;cursor:pointer}
+.cat-content{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.03)}
+
+/* --- FIXED ALIGNMENT FOR CATEGORY SECTION --- */
+.category-container{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.category-container .cat-name{
+  flex:1 1 auto;
+}
+.category-container .cat-expense,
+.category-container .cat-add{
+  flex:0 0 auto;
+}
 
 /* modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:40;opacity:0;pointer-events:none;transition:all .22s}
