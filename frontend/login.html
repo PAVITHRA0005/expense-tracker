@@ -46,20 +46,23 @@
         const data = await response.json();
 
         if (response.ok) {
-          // Save JWT token for authenticated requests
+          // ✅ Clear old email data if exists
+          localStorage.removeItem("email");
+
+          // Save JWT and user info
           localStorage.setItem("token", data.token);
           localStorage.setItem("userId", data.userId);
           localStorage.setItem("name", data.name);
 
-          // Save email & password to pre-fill next time
+          // Save email & password for pre-fill
           localStorage.setItem("savedEmail", email);
           localStorage.setItem("savedPassword", password);
 
-          // ✅ Store the logged-in email for dashboard & API calls
+          // ✅ Store logged-in email for dashboard & API
           localStorage.setItem("email", email);
 
           alert("Login successful!");
-          window.location.href = "dashboard.html"; // Redirect to your dashboard page
+          window.location.href = "dashboard.html";
         } else {
           alert(data.message || "Login failed. Check your credentials.");
         }

@@ -22,9 +22,8 @@
     const form = document.getElementById("signupForm");
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault(); // Prevent form from reloading page
+      e.preventDefault(); // Prevent form reload
 
-      // Get input values
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -39,11 +38,18 @@
         const data = await response.json();
 
         if (response.ok) {
-          // ✅ Store the new email in localStorage immediately
+          // ✅ Clear old email data to avoid conflicts
+          localStorage.removeItem("email");
+          localStorage.removeItem("savedEmail");
+          localStorage.removeItem("savedPassword");
+
+          // ✅ Store new user info
           localStorage.setItem("email", email);
+          localStorage.setItem("savedEmail", email);
+          localStorage.setItem("savedPassword", password);
 
           alert("Signup successful! You can now login.");
-          window.location.href = "login.html"; // Redirect to login page
+          window.location.href = "login.html";
         } else {
           alert(data.message || "Signup failed. Try again.");
         }
