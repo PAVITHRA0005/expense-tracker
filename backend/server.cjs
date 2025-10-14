@@ -1,4 +1,4 @@
-// backend/server.js
+// backend/server.cjs
 // Full deploy-ready server with monthly/yearly logs and monthly reset: auth, expenses, categories, salary/limit, profile,
 // + frontend static routes for Vercel, + monthly auto-save check, + update endpoints.
 
@@ -7,10 +7,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 
 app.use(express.json());
 app.use(cors());
@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
   ],
   monthlyLogs: [
     {
-      month: String, // "2025-10"
+      month: String,
       salary: Number,
       spent: Number,
       saved: Number,
@@ -67,33 +67,28 @@ async function applyMonthlyAutoSave(user){
     if (!salaryAmount) return user;
 
     const nowKey = monthKeyFromDate(new Date());
-    if (user.lastSavedMonth === nowKey) return user; // already applied this month
+    if (user.lastSavedMonth === nowKey) return user;
 
-    // Compute total expenses for the previous month
     const totalExpenses = (user.expenses || []).reduce((s,e) => s + (e.type === 'expense' ? Number(e.amount || 0) : 0), 0);
     const remaining = Math.max(0, salaryAmount - totalExpenses);
 
-    // Add to savedAmount
     if (remaining > 0) user.savedAmount = (Number(user.savedAmount || 0)) + remaining;
 
-    // Save monthly log for previous month
-    if(user.lastSavedMonth){ // only push if lastSavedMonth exists
+    if(user.lastSavedMonth){
       user.monthlyLogs = user.monthlyLogs || [];
       user.monthlyLogs.push({
         month: user.lastSavedMonth,
         salary: salaryAmount,
         spent: totalExpenses,
         saved: remaining,
-        expenses: [...user.expenses], // save detailed expenses
-        categories: [...user.categories] // save categories used that month
+        expenses: [...user.expenses],
+        categories: [...user.categories]
       });
     }
 
-    // Reset current month’s expenses & categories
     user.expenses = [];
     user.categories = [];
 
-    // Update lastSavedMonth
     user.lastSavedMonth = nowKey;
 
     await user.save();
@@ -118,7 +113,6 @@ function computeYearlySummary(monthlyLogs = []){
 }
 
 // ---------- API endpoints ----------
-
 // Signup
 app.post('/signup', async (req, res) => {
   try{
@@ -268,17 +262,16 @@ app.post('/expense', async (req, res) => {
   }
 });
 
-// Remaining endpoints (PUT expense, DELETE expense, salary, limit, updateRemaining, updateSavings) remain same
-// (keeping everything intact as per your previous instructions)
-
 // ---------- Static frontend routes ----------
+// Explicit routes to fix PathError
 app.use(express.static(__dirname));
 
-['/','/login','/signup','/dashboard','/about','/profile','/savings'].forEach(route => {
+const frontendRoutes = ['/', '/login', '/signup', '/dashboard', '/about', '/profile', '/savings'];
+frontendRoutes.forEach(route => {
   app.get(route, (req,res) => {
-    let file = route === '/' ? 'index.html' : route.substring(1)+'.html';
+    const file = route === '/' ? 'index.html' : route.substring(1)+'.html';
     const f = path.join(__dirname, file);
-    if(require('fs').existsSync(f)) return res.sendFile(f);
+    if(fs.existsSync(f)) return res.sendFile(f);
     return res.sendFile(path.join(__dirname, 'index.html'));
   });
 });
@@ -292,4 +285,3 @@ app.get('*', (req,res) => {
 app.listen(PORT, ()=> {
   console.log(`🚀 Server listening on port ${PORT}`);
 });
-
