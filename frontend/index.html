@@ -57,6 +57,19 @@
     <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="About" class="about-img">
   </section>
 
+  <!-- ✅ Expense Tracker Section (Added for backend integration) -->
+  <section class="tracker">
+    <h2>Add Your Daily Expenses</h2>
+    <form id="expense-form">
+      <input type="text" id="name" placeholder="Expense Name" required />
+      <input type="number" id="amount" placeholder="Amount" required />
+      <button type="submit" class="btn-primary">Add Expense</button>
+    </form>
+
+    <h3>Your Expenses</h3>
+    <ul id="expense-list"></ul>
+  </section>
+
   <script src="script.js"></script>
 </body>
 </html>

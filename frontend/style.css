@@ -178,3 +178,68 @@ button {
   max-width: 600px;
   z-index: 1;
 }
+/* ============================= */
+/* ✅ Expense Tracker Section   */
+/* ============================= */
+
+.tracker {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.tracker h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+#expense-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+#expense-form input {
+  width: 280px;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: 0.3s ease;
+}
+
+#expense-form input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+#expense-list {
+  list-style: none;
+  padding: 0;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+#expense-list li {
+  background: #fff;
+  margin: 10px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#expense-list li span {
+  font-weight: 500;
+}
+
+#expense-list li .amount {
+  color: #2d7a2d;
+  font-weight: 600;
+}
