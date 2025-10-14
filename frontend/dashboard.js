@@ -1,27 +1,23 @@
-// FINAL dashboard.js -- restore all features; only fix: show real username & real email on Profile.
-// Paste this file as dashboard.js and keep your dashboard.html and dashboard.css intact.
+// FINAL dashboard.js -- restore all features; only fix: show real username & email, and category row alignment with expense + add button
 
 document.addEventListener('DOMContentLoaded', () => {
   const API = 'http://localhost:5000';
   const token = localStorage.getItem('token') || '';
   const useBackend = !!token;
 
-  // --- Elements (IDs match the HTML you already have) ---
+  // --- Elements ---
   const views = {
     home: document.getElementById('view-home'),
     about: document.getElementById('view-about'),
     savings: document.getElementById('view-savings'),
     profile: document.getElementById('view-profile')
   };
-
-  // nav
   const navHome = document.getElementById('nav-home');
   const navAbout = document.getElementById('nav-about');
   const navSavings = document.getElementById('nav-savings');
   const navProfile = document.getElementById('nav-profile');
   const btnLogout = document.getElementById('btn-logout');
 
-  // Home controls
   const inputSalary = document.getElementById('input-salary');
   const selectMode = document.getElementById('select-mode');
   const btnSaveSalary = document.getElementById('save-salary');
@@ -33,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAdd = document.getElementById('btn-add');
   const expensesBody = document.getElementById('expenses-body');
 
-  // categories & modal
   const categoriesContainer = document.getElementById('categories-container');
   const addCatBtn = document.getElementById('add-cat');
   const customCatInput = document.getElementById('custom-cat');
@@ -46,14 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCancel = document.getElementById('modal-cancel');
   const modalSave = document.getElementById('modal-save');
 
-  // About table
   const aboutExpensesBody = document.getElementById('about-expenses-body');
 
-  // Savings controls
   const timeButtons = Array.from(document.querySelectorAll('.time-btn'));
   const savingsContent = document.getElementById('savings-content');
 
-  // Profile elements (IDs in your HTML)
   const profileNameEl = document.getElementById('profile-name');
   const profileEmailEl = document.getElementById('profile-email');
   const profileSalaryEl = document.getElementById('profile-salary');
@@ -61,10 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileSavedEl = document.getElementById('profile-saved');
   const editProfileBtn = document.getElementById('edit-profile');
 
-  // toast
   const toastEl = document.getElementById('toast');
 
-  // --- App State & defaults ---
+  // --- App State ---
   const defaultCats = ['Trust','Rent','EMI & Loans','Medical Expenses','Vacation','Electricity Bills'];
   const state = {
     profile: {
@@ -76,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastSavedMonth: localStorage.getItem('profile_lastSavedMonth') || null
     },
     categories: JSON.parse(localStorage.getItem('categories') || 'null') || defaultCats.slice(),
-    expenses: JSON.parse(localStorage.getItem('expenses') || 'null') || [] // {id, category, amount, type, date}
+    expenses: JSON.parse(localStorage.getItem('expenses') || 'null') || []
   };
 
   function persistState() {
@@ -90,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.profile.lastSavedMonth) localStorage.setItem('profile_lastSavedMonth', state.profile.lastSavedMonth);
   }
 
-  // --- helpers ---
   function showToast(msg, ms = 3000) {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -99,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(toastEl._t);
     toastEl._t = setTimeout(()=>{ toastEl.style.opacity = '0'; setTimeout(()=>toastEl.style.display='none', 220); }, ms);
   }
+
   function escapeHtml(s){ return String(s || '').replace(/[&<>'"]/g, k=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[k])); }
   function capitalize(s){ return s ? s[0].toUpperCase()+s.slice(1):''; }
   function formatCurrency(n){ if(typeof n!=='number') n = Number(n) || 0; return n.toLocaleString(); }
@@ -119,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return res.json().catch(()=>{});
   }
 
-  // --- Navigation (SPA views) ---
+  // --- Navigation ---
   function showView(name, push = true) {
     Object.values(views).forEach(v => v && v.classList.remove('active'));
     if (!views[name]) name = 'home';
@@ -139,13 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
   navSavings.addEventListener('click', ()=> showView('savings'));
   navProfile.addEventListener('click', ()=> showView('profile'));
 
-  // --- LOGOUT FIX ---
   btnLogout.addEventListener('click', ()=>{
     localStorage.removeItem('token');
     window.location.href = 'login.html';
   });
 
-  // --- Profile loader (backend preferred; local fallback) ---
   async function loadProfile() {
     if (useBackend) {
       try {
@@ -195,18 +184,55 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Profile updated locally');
   });
 
-  // --- Categories ---
+  // --- Categories with EXPENSE + ADD BUTTON inline ---
   function renderCategories() {
     categoriesContainer.innerHTML = '';
     state.categories.forEach(cat => {
-      // Updated: full card with proper alignment
       const div = document.createElement('div');
-      div.className = 'cat-card';
-      div.innerHTML = `<div class="cat-row"><span>${escapeHtml(cat)}</span></div>`;
+      div.className = 'category-container';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'cat-name';
+      nameSpan.textContent = capitalize(cat);
+
+      const expenseSpan = document.createElement('span');
+      expenseSpan.className = 'cat-expense';
+      const totalCat = state.expenses.filter(e=>e.category===cat && e.type==='expense').reduce((s,e)=>s+Number(e.amount),0);
+      expenseSpan.textContent = formatCurrency(totalCat);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'cat-add';
+      addBtn.textContent = 'Add';
+      addBtn.onclick = ()=>{
+        modalTitle.textContent = 'Add Expense';
+        modalAmount.value = '';
+        modalType.value = 'expense';
+        modalCategory.value = cat;
+        modalOverlay.style.display = 'flex';
+        modalSave.onclick = ()=>{
+          const e = {
+            category: modalCategory.value,
+            amount: Number(modalAmount.value || 0),
+            type: modalType.value,
+            date: new Date().toISOString()
+          };
+          state.expenses.push(e);
+          persistState();
+          renderExpensesTables();
+          renderCategories();
+          modalOverlay.style.display = 'none';
+          showToast('Expense added');
+        };
+      };
+
+      div.appendChild(nameSpan);
+      div.appendChild(expenseSpan);
+      div.appendChild(addBtn);
       categoriesContainer.appendChild(div);
     });
     renderModalCategories();
   }
+
   addCatBtn.addEventListener('click', ()=>{
     const val = customCatInput.value.trim();
     if (val && !state.categories.includes(val)) {
@@ -257,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.amount = Number(modalAmount.value || 0);
       e.type = modalType.value;
       e.date = new Date().toISOString();
-      persistState(); renderExpensesTables();
+      persistState(); renderExpensesTables(); renderCategories();
       modalOverlay.style.display = 'none';
       showToast('Expense updated');
     };
@@ -265,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.deleteExpense = function(idx){
     if(confirm('Are you sure to delete this expense?')){
-      state.expenses.splice(idx,1); persistState(); renderExpensesTables();
+      state.expenses.splice(idx,1); persistState(); renderExpensesTables(); renderCategories();
       showToast('Expense deleted');
     }
   };
@@ -283,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         date: new Date().toISOString()
       };
       state.expenses.push(e);
-      persistState(); renderExpensesTables();
+      persistState(); renderExpensesTables(); renderCategories();
       modalOverlay.style.display = 'none';
       showToast('Expense added');
     };
@@ -325,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   timeButtons.forEach(b=>b.addEventListener('click', ()=> showSavings(b.dataset.period)));
 
-  // --- Monthly auto-save check ---
+  // --- Monthly auto-save ---
   const thisMonth = new Date().getMonth();
   if(state.profile.lastSavedMonth!==String(thisMonth)){
     state.profile.savedAmount = 0;
@@ -333,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     persistState();
   }
 
-  // --- Initialize app ---
+  // --- Initialize ---
   renderCategories();
   renderExpensesTables();
   loadProfile();
