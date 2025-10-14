@@ -55,6 +55,9 @@
           localStorage.setItem("savedEmail", email);
           localStorage.setItem("savedPassword", password);
 
+          // ✅ Store the logged-in email for dashboard & API calls
+          localStorage.setItem("email", email);
+
           alert("Login successful!");
           window.location.href = "dashboard.html"; // Redirect to your dashboard page
         } else {
@@ -68,3 +71,4 @@
   </script>
 </body>
 </html>
+

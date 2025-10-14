@@ -39,6 +39,9 @@
         const data = await response.json();
 
         if (response.ok) {
+          // ✅ Store the new email in localStorage immediately
+          localStorage.setItem("email", email);
+
           alert("Signup successful! You can now login.");
           window.location.href = "login.html"; // Redirect to login page
         } else {
@@ -52,4 +55,3 @@
   </script>
 </body>
 </html>
-
