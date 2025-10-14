@@ -276,8 +276,8 @@ frontendRoutes.forEach(route => {
   });
 });
 
-// Fallback
-app.get('*', (req,res) => {
+// Fallback - serve index.html for all other routes
+app.use((req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
