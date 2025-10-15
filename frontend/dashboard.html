@@ -20,7 +20,7 @@
     </div>
   </div>
 
-  <!-- Container: full-page views -->
+  <!-- Container -->
   <main class="app-container">
 
     <!-- HOME view -->
@@ -28,6 +28,7 @@
       <div class="container">
         <div class="grid row-3">
 
+          <!-- Left column -->
           <div>
             <!-- Salary entry -->
             <div class="card salary-panel">
@@ -85,12 +86,12 @@
             </div>
           </div>
 
-          <!-- right column: categories -->
+          <!-- Right column: Categories -->
           <div>
             <div class="card">
               <h4>Categories</h4>
               <div style="margin-top:10px" id="categories-container">
-                <!-- Dynamic categories via JS -->
+                <!-- Dynamic categories rendered via JS -->
               </div>
 
               <div style="margin-top:12px;display:flex;gap:8px">
@@ -129,14 +130,12 @@
         <div class="card">
           <h3>Savings Summary</h3>
           <p class="muted">Choose timeframe to view aggregated savings/expenses.</p>
-
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
             <button class="time-btn" data-period="daily">Daily</button>
             <button class="time-btn" data-period="weekly">Weekly</button>
             <button class="time-btn" data-period="monthly">Monthly</button>
             <button class="time-btn" data-period="yearly">Yearly</button>
           </div>
-
           <div style="margin-top:18px" id="savings-content"></div>
         </div>
       </div>
@@ -165,7 +164,7 @@
   <!-- Modal for Add/Edit -->
   <div id="modal" class="modal-overlay" role="dialog" aria-hidden="true">
     <div class="modal">
-      <h3 id="modal-title">Add Expense</h3>
+      <h3 id="modal-title">Add Item</h3>
       <div style="margin-top:8px">
         <label class="small muted">Category</label>
         <select id="modal-category" style="width:100%;margin-top:6px"></select>
@@ -178,7 +177,7 @@
         <label class="small muted">Type</label>
         <select id="modal-type" style="width:100%;margin-top:6px">
           <option value="expense">Expense</option>
-          <option value="saving">Saving</option>
+          <option value="income">Income</option>
         </select>
       </div>
       <div class="actions" style="margin-top:12px">
