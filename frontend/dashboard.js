@@ -1,4 +1,4 @@
-// FINAL dashboard.js -- fixed Add button functionality
+// dashboard.js -- fully working buttons, modal, edit/delete, and category add
 
 document.addEventListener('DOMContentLoaded', () => {
   const API = 'http://localhost:5000';
@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
     expenses: JSON.parse(localStorage.getItem('expenses') || 'null') || []
   };
 
+  let currentEditIndex = null; // null = new add, number = edit expense
+
   function persistState() {
     localStorage.setItem('categories', JSON.stringify(state.categories));
     localStorage.setItem('expenses', JSON.stringify(state.expenses));
@@ -82,120 +84,125 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showToast(msg, ms = 3000) {
-    if (!toastEl) return;
     toastEl.textContent = msg;
     toastEl.style.display = 'block';
     toastEl.style.opacity = '1';
     clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(()=>{ toastEl.style.opacity = '0'; setTimeout(()=>toastEl.style.display='none', 220); }, ms);
+    toastEl._t = setTimeout(()=>{ toastEl.style.opacity='0'; setTimeout(()=>toastEl.style.display='none',220); }, ms);
   }
 
   function escapeHtml(s){ return String(s || '').replace(/[&<>'"]/g, k=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[k])); }
   function capitalize(s){ return s ? s[0].toUpperCase()+s.slice(1):''; }
-  function formatCurrency(n){ if(typeof n!=='number') n = Number(n) || 0; return n.toLocaleString(); }
-  function getWeek(d){ d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dayNum = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - dayNum); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7); return {year: d.getUTCFullYear(), week: String(weekNo).padStart(2,'0')}; }
+  function formatCurrency(n){ if(typeof n!=='number') n=Number(n)||0; return n.toLocaleString(); }
+  function getWeek(d){ d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dayNum = d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()+4-dayNum); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); const weekNo = Math.ceil((((d-yearStart)/86400000)+1)/7); return {year:d.getUTCFullYear(), week:String(weekNo).padStart(2,'0')}; }
 
-  async function authFetch(path, opts = {}) {
-    if (!useBackend) throw new Error('backend disabled');
+  async function authFetch(path, opts={}) {
+    if(!useBackend) throw new Error('backend disabled');
     const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
-    if (token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch(API + path, Object.assign({headers}, opts));
-    if (!res.ok) {
+    if(token) headers['Authorization']='Bearer '+token;
+    const res = await fetch(API+path,Object.assign({headers},opts));
+    if(!res.ok){
       let txt = await res.text().catch(()=>res.statusText);
-      try { const j = JSON.parse(txt); txt = j.message || txt; } catch(e){}
-      const err = new Error(txt || ('HTTP ' + res.status));
-      err.status = res.status;
+      try{ const j=JSON.parse(txt); txt=j.message||txt; }catch(e){}
+      const err = new Error(txt||('HTTP '+res.status));
+      err.status=res.status;
       throw err;
     }
     return res.json().catch(()=>{});
   }
 
   // --- Navigation ---
-  function showView(name, push = true) {
-    Object.values(views).forEach(v => v && v.classList.remove('active'));
-    if (!views[name]) name = 'home';
+  function showView(name,push=true){
+    Object.values(views).forEach(v=>v&&v.classList.remove('active'));
+    if(!views[name]) name='home';
     views[name].classList.add('active');
-    if (push) history.pushState({view:name}, '', '#'+name);
-    if (name === 'about') renderExpensesTables();
-    if (name === 'savings') {
-      const def = (state.profile.salary && state.profile.salary.type) ? state.profile.salary.type : 'monthly';
+    if(push) history.pushState({view:name},'', '#'+name);
+    if(name==='about') renderExpensesTables();
+    if(name==='savings'){ 
+      const def=(state.profile.salary&&state.profile.salary.type)?state.profile.salary.type:'monthly';
       showSavings(def);
     }
-    if (name === 'profile') renderProfile();
+    if(name==='profile') renderProfile();
   }
-  window.addEventListener('popstate', (e)=>{ const v = e.state && e.state.view ? e.state.view : (location.hash ? location.hash.slice(1) : 'home'); showView(v, false); });
+  window.addEventListener('popstate',()=>{ 
+    const v = history.state?.view || (location.hash?location.hash.slice(1):'home'); 
+    showView(v,false); 
+  });
 
-  navHome.addEventListener('click', ()=> showView('home'));
-  navAbout.addEventListener('click', ()=> showView('about'));
-  navSavings.addEventListener('click', ()=> showView('savings'));
-  navProfile.addEventListener('click', ()=> showView('profile'));
-  btnLogout.addEventListener('click', ()=>{ localStorage.removeItem('token'); window.location.href = 'login.html'; });
+  navHome.addEventListener('click',()=>showView('home'));
+  navAbout.addEventListener('click',()=>showView('about'));
+  navSavings.addEventListener('click',()=>showView('savings'));
+  navProfile.addEventListener('click',()=>showView('profile'));
+
+  btnLogout.addEventListener('click',()=>{ localStorage.removeItem('token'); window.location.href='login.html'; });
 
   // --- Profile ---
-  async function loadProfile() {
-    if (useBackend) {
-      try {
+  async function loadProfile(){
+    if(useBackend){
+      try{
         const data = await authFetch('/profile');
-        if (data) {
-          state.profile.name = data.username || data.name || state.profile.name || 'User';
-          state.profile.email = data.email || state.profile.email || '';
-          if (data.salary) state.profile.salary = { amount: Number(data.salary.amount || 0), type: data.salary.type || 'monthly' };
-          if (typeof data.limit !== 'undefined') state.profile.limit = Number(data.limit || 0);
-          if (typeof data.savedAmount !== 'undefined') state.profile.savedAmount = Number(data.savedAmount || 0);
-          if (typeof data.lastSavedMonth !== 'undefined') state.profile.lastSavedMonth = data.lastSavedMonth;
+        if(data){
+          state.profile.name = data.username||data.name||state.profile.name||'User';
+          state.profile.email = data.email||state.profile.email||'';
+          if(data.salary) state.profile.salary={amount:Number(data.salary.amount||0),type:data.salary.type||'monthly'};
+          if(typeof data.limit!=='undefined') state.profile.limit=Number(data.limit||0);
+          if(typeof data.savedAmount!=='undefined') state.profile.savedAmount=Number(data.savedAmount||0);
+          if(typeof data.lastSavedMonth!=='undefined') state.profile.lastSavedMonth=data.lastSavedMonth;
         }
-      } catch (err) { showToast('Unable to fetch profile from server — using local data'); }
+      }catch(err){ showToast('Unable to fetch profile — using local data'); }
     }
     persistState();
     updateProfileUI();
   }
 
-  function updateProfileUI() {
-    const salary = state.profile.salary && Number(state.profile.salary.amount) ? Number(state.profile.salary.amount) : 0;
-    const totalExpenses = state.expenses.reduce((s, e) => s + (e.type === 'expense' ? Number(e.amount) : 0), 0);
-    const remaining = salary ? (salary - totalExpenses) : (typeof state.profile.savedAmount === 'number' ? state.profile.savedAmount : '-');
+  function updateProfileUI(){
+    const salary = state.profile.salary?.amount||0;
+    const totalExpenses = state.expenses.reduce((s,e)=>s+(e.type==='expense'?Number(e.amount):0),0);
+    const remaining = salary?salary-totalExpenses:state.profile.savedAmount||0;
 
-    dispSalary.textContent = salary ? (formatCurrency(salary) + ' (' + (state.profile.salary.type || '-') + ')') : '-';
-    dispRemaining.textContent = (typeof remaining === 'number') ? formatCurrency(remaining) : '-';
-    dispLimit.textContent = state.profile.limit ? formatCurrency(state.profile.limit) : '-';
+    dispSalary.textContent = salary?(formatCurrency(salary)+' ('+state.profile.salary.type+')'):'-';
+    dispRemaining.textContent = formatCurrency(remaining);
+    dispLimit.textContent = formatCurrency(state.profile.limit);
 
-    if (profileNameEl) profileNameEl.textContent = state.profile.name || 'User';
-    if (profileEmailEl) profileEmailEl.textContent = state.profile.email || 'Not provided';
-    if (profileSalaryEl) profileSalaryEl.textContent = salary ? formatCurrency(salary) : '-';
-    if (profileModeEl) profileModeEl.textContent = state.profile.salary?.type || '-';
-    if (profileSavedEl) profileSavedEl.textContent = state.profile.savedAmount ? formatCurrency(state.profile.savedAmount) : '0';
+    profileNameEl.textContent = state.profile.name||'User';
+    profileEmailEl.textContent = state.profile.email||'Not provided';
+    profileSalaryEl.textContent = formatCurrency(salary);
+    profileModeEl.textContent = state.profile.salary?.type||'-';
+    profileSavedEl.textContent = formatCurrency(state.profile.savedAmount);
   }
 
   function renderProfile(){ updateProfileUI(); }
 
-  editProfileBtn.addEventListener('click', ()=> {
-    const newName = prompt('Enter your name', state.profile.name || '');
-    const newEmail = prompt('Enter your email', state.profile.email || '');
-    if (newName) state.profile.name = newName;
-    if (newEmail) state.profile.email = newEmail;
+  editProfileBtn.addEventListener('click', ()=>{
+    const newName = prompt('Enter your name', state.profile.name||'');
+    const newEmail = prompt('Enter your email', state.profile.email||'');
+    if(newName) state.profile.name=newName;
+    if(newEmail) state.profile.email=newEmail;
     persistState(); renderProfile(); showToast('Profile updated locally');
   });
 
   // --- Categories ---
-  function renderCategories() {
-    categoriesContainer.innerHTML = '';
-    state.categories.forEach(cat => {
-      const div = document.createElement('div');
-      div.className = 'category-container';
+  function renderCategories(){
+    categoriesContainer.innerHTML='';
+    state.categories.forEach(cat=>{
+      const div=document.createElement('div');
+      div.className='category-container';
 
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'cat-name';
-      nameSpan.textContent = capitalize(cat);
+      const nameSpan=document.createElement('span');
+      nameSpan.className='cat-name';
+      nameSpan.textContent=capitalize(cat);
 
-      const expenseSpan = document.createElement('span');
-      expenseSpan.className = 'cat-expense';
-      const totalCat = state.expenses.filter(e=>e.category===cat && e.type==='expense').reduce((s,e)=>s+Number(e.amount),0);
-      expenseSpan.textContent = formatCurrency(totalCat);
+      const expenseSpan=document.createElement('span');
+      expenseSpan.className='cat-expense';
+      const totalCat=state.expenses.filter(e=>e.category===cat && e.type==='expense').reduce((s,e)=>s+Number(e.amount),0);
+      expenseSpan.textContent=formatCurrency(totalCat);
 
-      const addBtn = document.createElement('button');
-      addBtn.className = 'cat-add';
-      addBtn.textContent = 'Add';
-      addBtn.onclick = () => openModal(cat);
+      const addBtn=document.createElement('button');
+      addBtn.className='cat-add';
+      addBtn.textContent='Add';
+      addBtn.addEventListener('click', ()=>{
+        openModal(cat);
+      });
 
       div.appendChild(nameSpan);
       div.appendChild(expenseSpan);
@@ -205,141 +212,134 @@ document.addEventListener('DOMContentLoaded', () => {
     renderModalCategories();
   }
 
-  function renderModalCategories() {
-    modalCategory.innerHTML = '';
-    state.categories.forEach(c => {
-      const opt = document.createElement('option'); 
-      opt.value = c; 
-      opt.textContent = capitalize(c);
+  function renderModalCategories(){
+    modalCategory.innerHTML='';
+    state.categories.forEach(c=>{
+      const opt=document.createElement('option');
+      opt.value=c;
+      opt.textContent=capitalize(c);
       modalCategory.appendChild(opt);
     });
   }
 
-  addCatBtn.addEventListener('click', ()=> {
+  addCatBtn.addEventListener('click', ()=>{
     const val = customCatInput.value.trim();
-    if(val && !state.categories.includes(val)) {
+    if(val && !state.categories.includes(val)){
       state.categories.push(val);
-      customCatInput.value = '';
+      customCatInput.value='';
       persistState();
       renderCategories();
       showToast('Category added');
     }
   });
 
-  // --- Modal Logic ---
-  function openModal(cat='') {
-    modalTitle.textContent = 'Add Entry';
-    modalAmount.value = '';
-    modalType.value = 'expense';
-    if(cat) modalCategory.value = cat;
-    modalOverlay.style.display = 'flex';
-
-    modalSave.onclick = ()=> {
-      const amountVal = Number(modalAmount.value || 0);
-      if(amountVal <= 0){ showToast('Enter a valid amount'); return; }
-      const e = {
-        category: modalCategory.value,
-        amount: amountVal,
-        type: modalType.value,
-        date: new Date().toISOString()
-      };
-      state.expenses.push(e);
-      persistState();
-      renderExpensesTables();
-      renderCategories();
-      modalOverlay.style.display = 'none';
-      showToast(`${capitalize(modalType.value)} added`);
-    };
+  function openModal(cat=null, isEdit=false, idx=null){
+    modalOverlay.style.display='flex';
+    modalTitle.textContent = isEdit?'Edit Expense':'Add Expense';
+    modalCategory.value = cat||state.categories[0];
+    modalAmount.value='';
+    modalType.value='expense';
+    currentEditIndex = idx; // null for new add
   }
 
-  modalCancel.addEventListener('click', ()=> modalOverlay.style.display='none');
+  modalSave.addEventListener('click', ()=>{
+    const e = {
+      category: modalCategory.value,
+      amount: Number(modalAmount.value||0),
+      type: modalType.value,
+      date: new Date().toISOString()
+    };
+    if(currentEditIndex!==null){
+      state.expenses[currentEditIndex] = e;
+      showToast('Expense updated');
+    }else{
+      state.expenses.push(e);
+      showToast('Expense added');
+    }
+    currentEditIndex=null;
+    persistState();
+    renderExpensesTables();
+    renderCategories();
+    modalOverlay.style.display='none';
+  });
 
-  // --- Expenses ---
-  function renderExpensesTables() {
-    expensesBody.innerHTML = '';
-    aboutExpensesBody.innerHTML = '';
-    state.expenses.forEach((e, idx)=> {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(e.category)}</td>
-                      <td>${formatCurrency(e.amount)}</td>
-                      <td>${escapeHtml(e.type)}</td>
-                      <td>${new Date(e.date).toLocaleString()}</td>
-                      <td><button class="btn btn-sm" onclick="editExpense(${idx})">Edit</button>
-                          <button class="btn btn-sm" onclick="deleteExpense(${idx})">Delete</button></td>`;
+  modalCancel.addEventListener('click', ()=>modalOverlay.style.display='none');
+
+  // --- Expenses Table ---
+  function renderExpensesTables(){
+    expensesBody.innerHTML='';
+    aboutExpensesBody.innerHTML='';
+    state.expenses.forEach((e,idx)=>{
+      const tr=document.createElement('tr');
+
+      const tdCat=document.createElement('td'); tdCat.textContent=e.category;
+      const tdAmt=document.createElement('td'); tdAmt.textContent=formatCurrency(e.amount);
+      const tdType=document.createElement('td'); tdType.textContent=e.type;
+      const tdDate=document.createElement('td'); tdDate.textContent=new Date(e.date).toLocaleString();
+
+      const tdAction=document.createElement('td');
+      const editBtn=document.createElement('button');
+      editBtn.className='btn btn-sm'; editBtn.textContent='Edit';
+      editBtn.addEventListener('click',()=> openModal(e.category,true,idx));
+      const delBtn=document.createElement('button');
+      delBtn.className='btn btn-sm'; delBtn.textContent='Delete';
+      delBtn.addEventListener('click',()=>{
+        if(confirm('Are you sure to delete this expense?')){
+          state.expenses.splice(idx,1); persistState(); renderExpensesTables(); renderCategories();
+          showToast('Expense deleted');
+        }
+      });
+      tdAction.appendChild(editBtn); tdAction.appendChild(delBtn);
+
+      tr.appendChild(tdCat); tr.appendChild(tdAmt); tr.appendChild(tdType); tr.appendChild(tdDate); tr.appendChild(tdAction);
+
       expensesBody.appendChild(tr);
       aboutExpensesBody.appendChild(tr.cloneNode(true));
     });
     updateProfileUI();
   }
 
-  window.editExpense = function(idx) {
-    const e = state.expenses[idx];
-    if(!e) return;
-    modalTitle.textContent = 'Edit Entry';
-    modalCategory.value = e.category;
-    modalAmount.value = e.amount;
-    modalType.value = e.type;
-    modalOverlay.style.display = 'flex';
-    modalSave.onclick = ()=> {
-      e.category = modalCategory.value;
-      e.amount = Number(modalAmount.value || 0);
-      e.type = modalType.value;
-      e.date = new Date().toISOString();
-      persistState(); renderExpensesTables(); renderCategories();
-      modalOverlay.style.display = 'none';
-      showToast('Entry updated');
-    };
-  };
-
-  window.deleteExpense = function(idx) {
-    if(confirm('Are you sure to delete this entry?')) {
-      state.expenses.splice(idx,1); persistState(); renderExpensesTables(); renderCategories();
-      showToast('Entry deleted');
-    }
-  };
-
+  // --- Top Add Button ---
   btnAdd.addEventListener('click', ()=> openModal());
 
   // --- Salary / Limit ---
-  btnSaveSalary.addEventListener('click', ()=> {
-    const val = Number(inputSalary.value || 0);
+  btnSaveSalary.addEventListener('click', ()=>{
+    const val=Number(inputSalary.value||0);
     if(val<=0){ showToast('Enter a valid salary'); return; }
-    state.profile.salary = { amount: val, type: selectMode.value };
-    persistState(); updateProfileUI();
-    showToast('Salary saved');
+    state.profile.salary={amount:val,type:selectMode.value};
+    persistState(); updateProfileUI(); showToast('Salary saved');
   });
 
-  btnSaveLimit.addEventListener('click', ()=> {
-    const val = Number(inputLimit.value || 0);
-    state.profile.limit = val; persistState(); updateProfileUI();
-    showToast('Limit saved');
+  btnSaveLimit.addEventListener('click', ()=>{
+    state.profile.limit = Number(inputLimit.value||0);
+    persistState(); updateProfileUI(); showToast('Limit saved');
   });
 
   // --- Savings view ---
-  function showSavings(period) {
-    const now = new Date();
-    const filtered = state.expenses.filter(e=>{
-      const d = new Date(e.date);
+  function showSavings(period){
+    const now=new Date();
+    const filtered=state.expenses.filter(e=>{
+      const d=new Date(e.date);
       if(period==='daily') return d.toDateString()===now.toDateString();
-      if(period==='weekly'){ const w1 = getWeek(now); const w2 = getWeek(d); return w1.year===w2.year && w1.week===w2.week; }
+      if(period==='weekly'){ const w1=getWeek(now); const w2=getWeek(d); return w1.year===w2.year && w1.week===w2.week; }
       if(period==='monthly') return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
       if(period==='yearly') return d.getFullYear()===now.getFullYear();
       return false;
     });
-    let html = '<table><thead><tr><th>Category</th><th>Amount</th><th>Type</th></tr></thead><tbody>';
+    let html='<table><thead><tr><th>Category</th><th>Amount</th><th>Type</th></tr></thead><tbody>';
     filtered.forEach(e=>{
-      html += `<tr><td>${escapeHtml(e.category)}</td><td>${formatCurrency(e.amount)}</td><td>${escapeHtml(e.type)}</td></tr>`;
+      html+=`<tr><td>${escapeHtml(e.category)}</td><td>${formatCurrency(e.amount)}</td><td>${escapeHtml(e.type)}</td></tr>`;
     });
-    html += '</tbody></table>';
-    savingsContent.innerHTML = html;
+    html+='</tbody></table>';
+    savingsContent.innerHTML=html;
   }
-  timeButtons.forEach(b=>b.addEventListener('click', ()=> showSavings(b.dataset.period)));
+  timeButtons.forEach(b=>b.addEventListener('click',()=>showSavings(b.dataset.period)));
 
   // --- Monthly auto-save ---
   const thisMonth = new Date().getMonth();
   if(state.profile.lastSavedMonth!==String(thisMonth)){
-    state.profile.savedAmount = 0;
-    state.profile.lastSavedMonth = String(thisMonth);
+    state.profile.savedAmount=0;
+    state.profile.lastSavedMonth=String(thisMonth);
     persistState();
   }
 
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCategories();
   renderExpensesTables();
   loadProfile();
-  const hashView = location.hash ? location.hash.slice(1) : 'home';
-  showView(hashView, false);
+  const hashView = location.hash?location.hash.slice(1):'home';
+  showView(hashView,false);
 });
 
