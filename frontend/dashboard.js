@@ -195,38 +195,17 @@ document.addEventListener('DOMContentLoaded', () => {
       nameSpan.className = 'cat-name';
       nameSpan.textContent = capitalize(cat);
 
-      const expenseSpan = document.createElement('span');
-      expenseSpan.className = 'cat-expense';
-      const totalCat = state.expenses.filter(e=>e.category===cat && e.type==='expense').reduce((s,e)=>s+Number(e.amount),0);
-      expenseSpan.textContent = formatCurrency(totalCat);
+      // 🔹 Changed text from "Expand" → "Expense" (kept class same)
+      const expenseBtn = document.createElement('button');
+      expenseBtn.className = 'expand-btn';
+      expenseBtn.textContent = 'Expense';
 
       const addBtn = document.createElement('button');
-      addBtn.className = 'cat-add';
-      addBtn.textContent = 'Add';
-      addBtn.onclick = ()=>{
-        modalTitle.textContent = 'Add Expense';
-        modalAmount.value = '';
-        modalType.value = 'expense';
-        modalCategory.value = cat;
-        modalOverlay.style.display = 'flex';
-        modalSave.onclick = ()=>{
-          const e = {
-            category: modalCategory.value,
-            amount: Number(modalAmount.value || 0),
-            type: modalType.value,
-            date: new Date().toISOString()
-          };
-          state.expenses.push(e);
-          persistState();
-          renderExpensesTables();
-          renderCategories();
-          modalOverlay.style.display = 'none';
-          showToast('Expense added');
-        };
-      };
+      addBtn.className = 'add-btn';
+      addBtn.textContent = 'Add item';
 
       div.appendChild(nameSpan);
-      div.appendChild(expenseSpan);
+      div.appendChild(expenseBtn);
       div.appendChild(addBtn);
       categoriesContainer.appendChild(div);
     });
