@@ -1,4 +1,4 @@
-// FINAL dashboard.js -- full-fledged with savings buttons styled and limit alert
+// FINAL dashboard.js -- all features preserved, added savings button styling & limit alert
 
 document.addEventListener('DOMContentLoaded', () => {
   const API = 'http://localhost:5000';
@@ -159,9 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
     dispRemaining.textContent = (typeof remaining === 'number') ? formatCurrency(remaining) : '-';
     dispLimit.textContent = state.profile.limit ? formatCurrency(state.profile.limit) : '-';
 
-    // --- Limit alert ---
+    // Check limit alert
     if(state.profile.limit && totalExpenses > state.profile.limit){
-      showToast('Alert: You have exceeded your set limit!');
+      showToast(`Alert! You have exceeded your limit of ${formatCurrency(state.profile.limit)}`);
     }
 
     if (profileNameEl) profileNameEl.textContent = state.profile.name || 'User';
@@ -351,12 +351,10 @@ document.addEventListener('DOMContentLoaded', () => {
     savingsContent.innerHTML = html;
   }
 
-  // --- Savings buttons style like Add/Save ---
+  // --- Apply violet button style to savings buttons ---
   timeButtons.forEach(b=>{
-    b.classList.add('btn'); // Add the violet button style
-    b.addEventListener('click', ()=> {
-      showSavings(b.dataset.period);
-    });
+    b.addEventListener('click', ()=> showSavings(b.dataset.period));
+    b.classList.add('btn'); // same violet styling as add/save buttons
   });
 
   // --- Monthly auto-save ---
