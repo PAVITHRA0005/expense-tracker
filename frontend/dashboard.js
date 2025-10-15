@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(profileModeEl) profileModeEl.textContent = state.profile.salary?.type || '-';
     if(profileSavedEl) profileSavedEl.textContent = formatCurrency(state.profile.savedAmount || 0);
 
-    if(state.profile.limit && remaining<0) showToast('Alert! Expense limit exceeded.');
+    if(state.profile.limit && totalExpenses > state.profile.limit) showToast('Warning: You have exceeded your set limit!');
   }
 
   function renderProfile(){ updateProfileUI(); }
@@ -211,13 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAdd.addEventListener('click', ()=> openModal('', 'expense', 'Add Expense'));
 
   // --- Salary/Limit ---
-  btnSaveSalary.addEventListener('click', ()=>{
-    const val=Number(inputSalary.value||0); if(val<=0){showToast('Enter valid salary'); return;}
-    state.profile.salary={amount: val, type: selectMode.value};
-    persistState(); updateProfileUI(); showToast('Salary saved');
+   btnSaveSalary.addEventListener('click', ()=>{
+    const val=Number(inputSalary.value||0);
+    if(val<=0){ showToast('Enter a valid salary'); return; }
+    state.profile.salary={amount:val,type:selectMode.value}; persistState(); updateProfileUI(); showToast('Salary saved');
   });
+
   btnSaveLimit.addEventListener('click', ()=>{
-    state.profile.limit = Number(inputLimit.value||0); persistState(); updateProfileUI(); showToast('Limit saved');
+    const val=Number(inputLimit.value||0);
+    state.profile.limit=val; persistState(); updateProfileUI(); showToast('Limit saved');
   });
 
   // --- Savings ---
