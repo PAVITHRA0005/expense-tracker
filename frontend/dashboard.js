@@ -1,4 +1,4 @@
-// FINAL dashboard.js -- restore all features; only fix: show real username & email, and category row alignment with expense + add button
+// FINAL dashboard.js -- restore all requested features; no changes to layout or styles
 
 document.addEventListener('DOMContentLoaded', () => {
   const API = 'http://localhost:5000';
@@ -130,10 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navSavings.addEventListener('click', ()=> showView('savings'));
   navProfile.addEventListener('click', ()=> showView('profile'));
 
-  btnLogout.addEventListener('click', ()=>{
-    localStorage.removeItem('token');
-    window.location.href = 'login.html';
-  });
+  btnLogout.addEventListener('click', ()=>{ localStorage.removeItem('token'); window.location.href = 'login.html'; });
 
   async function loadProfile() {
     if (useBackend) {
@@ -147,10 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (typeof data.savedAmount !== 'undefined') state.profile.savedAmount = Number(data.savedAmount || 0);
           if (typeof data.lastSavedMonth !== 'undefined') state.profile.lastSavedMonth = data.lastSavedMonth;
         }
-      } catch (err) {
-        console.warn('loadProfile backend failed, using local state', err);
-        showToast('Unable to fetch profile from server — using local data');
-      }
+      } catch (err) { showToast('Unable to fetch profile from server — using local data'); }
     }
     persistState();
     updateProfileUI();
@@ -174,17 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderProfile(){ updateProfileUI(); }
 
-  editProfileBtn.addEventListener('click', ()=>{
+  editProfileBtn.addEventListener('click', ()=> {
     const newName = prompt('Enter your name', state.profile.name || '');
     const newEmail = prompt('Enter your email', state.profile.email || '');
     if (newName) state.profile.name = newName;
     if (newEmail) state.profile.email = newEmail;
-    persistState();
-    renderProfile();
-    showToast('Profile updated locally');
+    persistState(); renderProfile(); showToast('Profile updated locally');
   });
 
-  // --- Categories with EXPENSE + ADD BUTTON inline ---
+  // --- Categories with inline Add button ---
   function renderCategories() {
     categoriesContainer.innerHTML = '';
     state.categories.forEach(cat => {
@@ -195,26 +187,48 @@ document.addEventListener('DOMContentLoaded', () => {
       nameSpan.className = 'cat-name';
       nameSpan.textContent = capitalize(cat);
 
-      // 🔹 Changed text from "Expand" → "Expense" (kept class same)
-      const expenseBtn = document.createElement('button');
-      expenseBtn.className = 'expand-btn';
-      expenseBtn.textContent = 'Expense';
+      const expenseSpan = document.createElement('span');
+      expenseSpan.className = 'cat-expense';
+      const totalCat = state.expenses.filter(e=>e.category===cat && e.type==='expense').reduce((s,e)=>s+Number(e.amount),0);
+      expenseSpan.textContent = formatCurrency(totalCat);
 
       const addBtn = document.createElement('button');
-      addBtn.className = 'add-btn';
-      addBtn.textContent = 'Add item';
+      addBtn.className = 'cat-add';
+      addBtn.textContent = 'Add';
+      addBtn.onclick = ()=> {
+        modalTitle.textContent = 'Add Expense';
+        modalAmount.value = '';
+        modalType.value = 'expense';
+        modalCategory.value = cat;
+        modalOverlay.style.display = 'flex';
+
+        modalSave.onclick = ()=> {
+          const e = {
+            category: modalCategory.value,
+            amount: Number(modalAmount.value || 0),
+            type: modalType.value,
+            date: new Date().toISOString()
+          };
+          state.expenses.push(e);
+          persistState();
+          renderExpensesTables();
+          renderCategories();
+          modalOverlay.style.display = 'none';
+          showToast('Expense added');
+        };
+      };
 
       div.appendChild(nameSpan);
-      div.appendChild(expenseBtn);
+      div.appendChild(expenseSpan);
       div.appendChild(addBtn);
       categoriesContainer.appendChild(div);
     });
     renderModalCategories();
   }
 
-  addCatBtn.addEventListener('click', ()=>{
+  addCatBtn.addEventListener('click', ()=> {
     const val = customCatInput.value.trim();
-    if (val && !state.categories.includes(val)) {
+    if(val && !state.categories.includes(val)) {
       state.categories.push(val);
       customCatInput.value = '';
       persistState();
@@ -225,8 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderModalCategories() {
     modalCategory.innerHTML = '';
-    state.categories.forEach(c=>{
-      const opt = document.createElement('option'); opt.value = c; opt.textContent = capitalize(c);
+    state.categories.forEach(c => {
+      const opt = document.createElement('option'); 
+      opt.value = c; 
+      opt.textContent = capitalize(c);
       modalCategory.appendChild(opt);
     });
   }
@@ -235,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderExpensesTables() {
     expensesBody.innerHTML = '';
     aboutExpensesBody.innerHTML = '';
-    state.expenses.forEach((e, idx)=>{
+    state.expenses.forEach((e, idx)=> {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${escapeHtml(e.category)}</td>
                       <td>${formatCurrency(e.amount)}</td>
@@ -249,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProfileUI();
   }
 
-  window.editExpense = function(idx){
+  window.editExpense = function(idx) {
     const e = state.expenses[idx];
     if(!e) return;
     modalTitle.textContent = 'Edit Expense';
@@ -257,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalAmount.value = e.amount;
     modalType.value = e.type;
     modalOverlay.style.display = 'flex';
-    modalSave.onclick = ()=>{
+    modalSave.onclick = ()=> {
       e.category = modalCategory.value;
       e.amount = Number(modalAmount.value || 0);
       e.type = modalType.value;
@@ -268,19 +284,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  window.deleteExpense = function(idx){
-    if(confirm('Are you sure to delete this expense?')){
+  window.deleteExpense = function(idx) {
+    if(confirm('Are you sure to delete this expense?')) {
       state.expenses.splice(idx,1); persistState(); renderExpensesTables(); renderCategories();
       showToast('Expense deleted');
     }
   };
 
-  btnAdd.addEventListener('click', ()=>{
+  btnAdd.addEventListener('click', ()=> {
     modalTitle.textContent = 'Add Expense';
     modalAmount.value = '';
     modalType.value = 'expense';
     modalOverlay.style.display = 'flex';
-    modalSave.onclick = ()=>{
+    modalSave.onclick = ()=> {
       const e = {
         category: modalCategory.value,
         amount: Number(modalAmount.value || 0),
@@ -293,10 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Expense added');
     };
   });
-  modalCancel.addEventListener('click', ()=>modalOverlay.style.display='none');
+
+  modalCancel.addEventListener('click', ()=> modalOverlay.style.display='none');
 
   // --- Salary / Limit ---
-  btnSaveSalary.addEventListener('click', ()=>{
+  btnSaveSalary.addEventListener('click', ()=> {
     const val = Number(inputSalary.value || 0);
     if(val<=0){ showToast('Enter a valid salary'); return; }
     state.profile.salary = { amount: val, type: selectMode.value };
@@ -304,14 +321,14 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Salary saved');
   });
 
-  btnSaveLimit.addEventListener('click', ()=>{
+  btnSaveLimit.addEventListener('click', ()=> {
     const val = Number(inputLimit.value || 0);
     state.profile.limit = val; persistState(); updateProfileUI();
     showToast('Limit saved');
   });
 
   // --- Savings view ---
-  function showSavings(period){
+  function showSavings(period) {
     const now = new Date();
     const filtered = state.expenses.filter(e=>{
       const d = new Date(e.date);

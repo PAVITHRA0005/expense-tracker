@@ -20,13 +20,14 @@
     </div>
   </div>
 
-  <!-- Container: we will swap full-page views -->
+  <!-- Container: full-page views -->
   <main class="app-container">
 
     <!-- HOME view -->
     <section id="view-home" class="view active">
       <div class="container">
         <div class="grid row-3">
+
           <div>
             <!-- Salary entry -->
             <div class="card salary-panel">
@@ -78,8 +79,7 @@
                   <thead>
                     <tr><th>Category</th><th>Amount</th><th>Type</th><th>Date/Time</th><th>Action</th></tr>
                   </thead>
-                  <tbody id="expenses-body">
-                  </tbody>
+                  <tbody id="expenses-body"></tbody>
                 </table>
               </div>
             </div>
@@ -90,9 +90,7 @@
             <div class="card">
               <h4>Categories</h4>
               <div style="margin-top:10px" id="categories-container">
-                <!-- Updated category card structure -->
-                <!-- Example for static categories (dynamic ones will follow same structure via JS) -->
-                <!-- <div class="category-card"><span>EMI</span><button class="small">Edit</button></div> -->
+                <!-- Dynamic categories via JS -->
               </div>
 
               <div style="margin-top:12px;display:flex;gap:8px">
@@ -106,12 +104,12 @@
       </div>
     </section>
 
-    <!-- ABOUT view -> shows full expense record information -->
+    <!-- ABOUT view -->
     <section id="view-about" class="view">
       <div class="container">
         <div class="card">
           <h3>About - Expense Records</h3>
-          <p class="muted">This page displays the detailed expense records. You can edit or delete entries here.</p>
+          <p class="muted">This page displays detailed expense records. You can edit or delete entries here.</p>
           <div style="height:12px"></div>
           <div class="table-container">
             <table id="about-expenses-table">
@@ -125,7 +123,7 @@
       </div>
     </section>
 
-    <!-- SAVINGS view -> aggregated by timeframe -->
+    <!-- SAVINGS view -->
     <section id="view-savings" class="view">
       <div class="container">
         <div class="card">
@@ -139,14 +137,12 @@
             <button class="time-btn" data-period="yearly">Yearly</button>
           </div>
 
-          <div style="margin-top:18px" id="savings-content">
-            <!-- generated summary here -->
-          </div>
+          <div style="margin-top:18px" id="savings-content"></div>
         </div>
       </div>
     </section>
 
-    <!-- PROFILE view -> user's profile -->
+    <!-- PROFILE view -->
     <section id="view-profile" class="view">
       <div class="container">
         <div class="card">
