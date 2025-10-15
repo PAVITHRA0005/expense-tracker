@@ -9,10 +9,10 @@ const path = require('path');
 require('dotenv').config();
 const fs = require('fs');
 
+const app = express();
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-
+// ---------- Middleware ----------
 app.use(express.json());
 app.use(cors());
 
@@ -263,26 +263,28 @@ app.post('/expense', async (req, res) => {
   }
 });
 
-// ---------- Static frontend routes ----------
-// Explicit routes to fix PathError
-app.use(express.static(__dirname));
+// ---------- Static frontend routes for Vercel ----------
+const frontendPath = path.join(__dirname, '../frontend');
+if(fs.existsSync(frontendPath)){
+  app.use(express.static(frontendPath));
 
-const frontendRoutes = ['/', '/login', '/signup', '/dashboard', '/about', '/profile', '/savings'];
-frontendRoutes.forEach(route => {
-  app.get(route, (req,res) => {
-    const file = route === '/' ? 'index.html' : route.substring(1)+'.html';
-    const f = path.join(__dirname, file);
-    if(fs.existsSync(f)) return res.sendFile(f);
-    return res.sendFile(path.join(__dirname, 'index.html'));
+  const frontendRoutes = ['/', '/login', '/signup', '/dashboard', '/about', '/profile', '/savings'];
+  frontendRoutes.forEach(route => {
+    app.get(route, (req,res) => {
+      const file = route === '/' ? 'index.html' : route.substring(1)+'.html';
+      const f = path.join(frontendPath, file);
+      if(fs.existsSync(f)) return res.sendFile(f);
+      return res.sendFile(path.join(frontendPath, 'index.html'));
+    });
   });
-});
 
-// Fallback - serve index.html for all other routes
-app.use((req, res, next) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+  // Fallback
+  app.use((req, res, next) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
-// ---------- Start ----------
+// ---------- Start server ----------
 app.listen(PORT, ()=> {
   console.log(`🚀 Server listening on port ${PORT}`);
 });

@@ -1,31 +1,24 @@
 {
-  "version": 2,
+  "version": 3,
+  "name": "expense-tracker",
   "builds": [
     {
-      "src": "server.js",
+      "src": "backend/server.cjs",
       "use": "@vercel/node"
     },
     {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
+      "src": "frontend/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "backend/server.cjs"
     },
     {
       "src": "/(.*)",
-      "dest": "/server.js"
+      "dest": "frontend/$1"
     }
   ]
 }
