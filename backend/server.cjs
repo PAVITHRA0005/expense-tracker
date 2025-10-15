@@ -1,7 +1,4 @@
 // backend/server.cjs
-// Full deploy-ready server with monthly/yearly logs and monthly reset: auth, expenses, categories, salary/limit, profile,
-// + frontend static routes for Vercel, + monthly auto-save check, + update endpoints.
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,7 +9,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ---------- Middleware ----------
+// Middleware
 app.use(express.json());
 app.use(cors());
 
@@ -61,7 +58,6 @@ function monthKeyFromDate(d = new Date()){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
-// Apply monthly reset & auto-save
 async function applyMonthlyAutoSave(user){
   try{
     const salaryAmount = Number(user.salary?.amount || 0);
@@ -100,7 +96,6 @@ async function applyMonthlyAutoSave(user){
   }
 }
 
-// Calculate yearly summary from monthly logs
 function computeYearlySummary(monthlyLogs = []){
   const yearlyMap = {};
   monthlyLogs.forEach(log => {
@@ -113,9 +108,11 @@ function computeYearlySummary(monthlyLogs = []){
   return Object.values(yearlyMap);
 }
 
-// ---------- API endpoints ----------
+// ---------- API Routes Prefix ----------
+const router = express.Router();
+
 // Signup
-app.post('/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
   try{
     const { username, email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Email & password required' });
@@ -139,7 +136,7 @@ app.post('/signup', async (req, res) => {
 });
 
 // Login
-app.post('/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   try{
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Email & password required' });
@@ -156,9 +153,9 @@ app.post('/login', async (req, res) => {
 });
 
 // Profile
-app.get('/profile', async (req, res) => {
+router.get('/profile', async (req, res) => {
   try{
-    const email = req.query.email || (req.body && req.body.email) || null;
+    const email = req.query.email || null;
     if (!email) return res.status(400).json({ message: 'Email query required: /profile?email=you@domain.com' });
 
     let user = await User.findOne({ email });
@@ -192,7 +189,7 @@ app.get('/profile', async (req, res) => {
 });
 
 // Categories
-app.get('/categories', async (req, res) => {
+router.get('/categories', async (req, res) => {
   try{
     const email = req.query.email || null;
     if (email) {
@@ -207,8 +204,7 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-// Add category
-app.post('/category', async (req, res) => {
+router.post('/category', async (req, res) => {
   try{
     const { email, name } = req.body;
     if (!email || !name) return res.status(400).json({ message: 'email & name required' });
@@ -225,7 +221,7 @@ app.post('/category', async (req, res) => {
 });
 
 // Expenses CRUD
-app.get('/expenses', async (req, res) => {
+router.get('/expenses', async (req, res) => {
   try{
     const email = req.query.email;
     if (!email) return res.status(400).json({ message: 'email required' });
@@ -241,7 +237,7 @@ app.get('/expenses', async (req, res) => {
   }
 });
 
-app.post('/expense', async (req, res) => {
+router.post('/expense', async (req, res) => {
   try{
     const { email, category, amount, type } = req.body;
     if (!email || !category || !amount) return res.status(400).json({ message: 'email, category, amount required' });
@@ -263,26 +259,26 @@ app.post('/expense', async (req, res) => {
   }
 });
 
-// ---------- Static frontend routes for Vercel ----------
-const frontendPath = path.join(__dirname, '../frontend');
-if(fs.existsSync(frontendPath)){
-  app.use(express.static(frontendPath));
+// ---------- Apply /api prefix ----------
+app.use('/api', router);
 
-  const frontendRoutes = ['/', '/login', '/signup', '/dashboard', '/about', '/profile', '/savings'];
-  frontendRoutes.forEach(route => {
-    app.get(route, (req,res) => {
-      const file = route === '/' ? 'index.html' : route.substring(1)+'.html';
-      const f = path.join(frontendPath, file);
-      if(fs.existsSync(f)) return res.sendFile(f);
-      return res.sendFile(path.join(frontendPath, 'index.html'));
-    });
-  });
+// ---------- Static frontend routes ----------
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-  // Fallback
-  app.use((req, res, next) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+const frontendRoutes = ['/', '/login', '/signup', '/dashboard', '/about', '/profile', '/savings'];
+frontendRoutes.forEach(route => {
+  app.get(route, (req,res) => {
+    const file = route === '/' ? 'index.html' : route.substring(1)+'.html';
+    const f = path.join(__dirname, '../frontend', file);
+    if(fs.existsSync(f)) return res.sendFile(f);
+    return res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
   });
-}
+});
+
+// Fallback
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+});
 
 // ---------- Start server ----------
 app.listen(PORT, ()=> {
