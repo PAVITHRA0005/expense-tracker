@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "builds": [
     { "src": "backend/server.cjs", "use": "@vercel/node" },
     { "src": "frontend/**", "use": "@vercel/static" }
