@@ -1,7 +1,7 @@
 // dashboard.js -- fully functional, Vercel-ready, combined with requested fixes
 
 document.addEventListener('DOMContentLoaded', () => {
-  const API = '/api'; // ✅ changed from localhost to relative API path
+  const API = '/api'; // ✅ relative API path for Vercel
   const token = localStorage.getItem('token') || '';
   const useBackend = !!token;
 
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     profile: {
       name: localStorage.getItem('profile_name') || 'User',
-      email: localStorage.getItem('profile_email') || '',
+      email: localStorage.getItem('profile_email') || localStorage.getItem('email') || '',
       salary: JSON.parse(localStorage.getItem('profile_salary') || 'null') || null,
       limit: Number(localStorage.getItem('profile_limit') || 0),
       savedAmount: Number(localStorage.getItem('profile_saved') || 0),
