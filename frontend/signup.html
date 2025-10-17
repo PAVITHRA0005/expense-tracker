@@ -24,9 +24,14 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault(); // Prevent form reload
 
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
+
+      if (!name || !email || !password) {
+        alert("All fields are required!");
+        return;
+      }
 
       try {
         // ✅ Use relative API path for Vercel deployment
@@ -44,7 +49,7 @@
           localStorage.removeItem("savedEmail");
           localStorage.removeItem("savedPassword");
 
-          // Store new user info
+          // Store new user info for pre-fill convenience
           localStorage.setItem("email", email);
           localStorage.setItem("savedEmail", email);
           localStorage.setItem("savedPassword", password);
@@ -62,4 +67,3 @@
   </script>
 </body>
 </html>
-

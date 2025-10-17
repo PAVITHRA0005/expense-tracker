@@ -33,11 +33,17 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const email = emailInput.value;
+      const email = emailInput.value.trim();
       const password = passwordInput.value;
 
+      if (!email || !password) {
+        alert("Both email and password are required!");
+        return;
+      }
+
       try {
-        const response = await fetch("/api/login", {   // ✅ Fixed endpoint
+        // ✅ Use relative API path for Vercel deployment
+        const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password })
@@ -46,19 +52,19 @@
         const data = await response.json();
 
         if (response.ok) {
-          // ✅ Clear old email data if exists
+          // Clear old email data if exists
           localStorage.removeItem("email");
 
           // Save JWT and user info
           localStorage.setItem("token", data.token);
           localStorage.setItem("userId", data.userId);
-          localStorage.setItem("name", data.name);
+          localStorage.setItem("name", data.name || '');
 
-          // Save email & password for pre-fill
+          // Save email & password for pre-fill convenience
           localStorage.setItem("savedEmail", email);
           localStorage.setItem("savedPassword", password);
 
-          // ✅ Store logged-in email for dashboard & API
+          // Store logged-in email for dashboard & API
           localStorage.setItem("email", email);
 
           alert("Login successful!");
@@ -74,4 +80,3 @@
   </script>
 </body>
 </html>
-
