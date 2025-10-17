@@ -281,6 +281,10 @@ app.use((req, res) => {
 });
 
 // ---------- Start server ----------
-app.listen(PORT, ()=> {
-  console.log(`🚀 Server listening on port ${PORT}`);
-});
+if (process.env.VERCEL) {
+  module.exports = app; // ✅ Vercel serverless function export
+} else {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running locally on port ${PORT}`);
+  });
+}
