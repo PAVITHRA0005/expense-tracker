@@ -1,9 +1,10 @@
-// dashboard.js -- fully functional, combined with requested fixes
+// dashboard.js -- fully functional, Vercel-ready, combined with requested fixes
 
 document.addEventListener('DOMContentLoaded', () => {
-  const API = 'http://localhost:5000';
+  const API = '/api'; // ✅ changed from localhost to relative API path
   const token = localStorage.getItem('token') || '';
   const useBackend = !!token;
+
   // --- Elements ---
   const views = {
     home: document.getElementById('view-home'),
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderProfile(){ updateProfileUI(); }
 
-  editProfileBtn.addEventListener('click', ()=>{
+  editProfileBtn.addEventListener('click', ()=> {
     const newName = prompt('Enter your name', state.profile.name || '');
     const newEmail = prompt('Enter your email', state.profile.email || '');
     if(newName) state.profile.name=newName;
@@ -211,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAdd.addEventListener('click', ()=> openModal('', 'expense', 'Add Expense'));
 
   // --- Salary/Limit ---
-   btnSaveSalary.addEventListener('click', ()=>{
+  btnSaveSalary.addEventListener('click', ()=>{
     const val=Number(inputSalary.value||0);
     if(val<=0){ showToast('Enter a valid salary'); return; }
     state.profile.salary={amount:val,type:selectMode.value}; persistState(); updateProfileUI(); showToast('Salary saved');
@@ -253,3 +254,4 @@ document.addEventListener('DOMContentLoaded', () => {
   updateProfileUI();
   showView(location.hash?location.hash.slice(1):'home',false);
 });
+

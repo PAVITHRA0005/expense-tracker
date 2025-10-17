@@ -29,21 +29,22 @@
       const password = document.getElementById("password").value;
 
       try {
-        const response = await fetch("http://localhost:5000/signup", {
+        // ✅ Use relative API path for Vercel deployment
+        const response = await fetch("/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password })
+          body: JSON.stringify({ username: name, email, password })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          // ✅ Clear old email data to avoid conflicts
+          // Clear old stored data
           localStorage.removeItem("email");
           localStorage.removeItem("savedEmail");
           localStorage.removeItem("savedPassword");
 
-          // ✅ Store new user info
+          // Store new user info
           localStorage.setItem("email", email);
           localStorage.setItem("savedEmail", email);
           localStorage.setItem("savedPassword", password);
@@ -61,3 +62,4 @@
   </script>
 </body>
 </html>
+
